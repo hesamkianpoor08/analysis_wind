@@ -4,105 +4,148 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
-import streamlit.components.v1 as components
 
-# --- Force Light Mode (fix Chrome dark inversion) ---
+# --- CRITICAL: Force Light Mode (Enhanced) ---
+st.set_page_config(
+    page_title="Wind Load Calculator",
+    page_icon="🌬️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Enhanced CSS to force light mode across all browsers and accounts
 st.markdown("""
 <style>
-  html, body, .stApp {
-    color-scheme: light !important;
-    background-color: #FFFFFF !important;
-    color: #000000 !important;
-  }
-
-  .stApp * {
-    color: #000000 !important;
-    -webkit-text-fill-color: #000000 !important;
-    filter: none !important;
-  }
-
-  .stPlotlyChart svg, .stPlotlyChart .js-plotly-plot {
-    color: #000000 !important;
-  }
-
-  input, textarea, select, button {
-    color: #000000 !important;
-  }
-</style>
-""", unsafe_allow_html=True)
-
-components.html("""
-<script>
-  try {
-    document.documentElement.style.colorScheme = 'light';
-    document.documentElement.style.backgroundColor = '#ffffff';
-    document.documentElement.style.filter = 'none';
-  } catch(e) { console.log(e) }
-</script>
-""", height=0)
-
-
-# --- CSS Styling (Light Theme) ---
-st.markdown("""
-<style>
-    .stApp {
-        background-color: #FFFFFF;
-        color: #000000;
+    /* Force light mode at root level */
+    :root {
+        color-scheme: light only !important;
     }
+    
+    html, body, [data-testid="stAppViewContainer"], .main, .stApp {
+        color-scheme: light !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        forced-color-adjust: none !important;
+    }
+
+    /* Override all text colors */
+    * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    
+    /* Specific overrides for input fields */
+    input, textarea, select, button, label, p, span, div {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    
+    /* Number input styling */
+    input[type="number"] {
+        background-color: #2D3748 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        border: 1px solid #4A5568 !important;
+    }
+    
+    /* Radio buttons and labels */
+    .stRadio label, .stRadio p {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    
+    /* Plotly charts */
+    .stPlotlyChart, .js-plotly-plot, .plotly {
+        background-color: #FFFFFF !important;
+    }
+    
+    .stPlotlyChart svg text {
+        fill: #000000 !important;
+    }
+
+    /* Title */
     h1 {
         color: #1976D2 !important;
+        -webkit-text-fill-color: #1976D2 !important;
         font-size: 40px !important;
         text-align: center;
         font-weight: bold;
     }
-    .stSelectbox label, .stNumberInput label {
+    
+    /* Subheaders */
+    h2, h3 {
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+    
+    /* Labels */
+    .stNumberInput label, .stSelectbox label, .stFileUploader label {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         font-weight: bold;
     }   
+    
+    /* Button styling */
     div.stButton > button:first-child {
-        background-color: #2196F3;
-        color: white;
+        background-color: #2196F3 !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
         border-radius: 8px;
         height: 3em;
         width: 100%;
         font-size: 16px;
         border: none;
     }
+    
     div.stButton > button:first-child:hover {
-        background-color: #1976D2;
-        color: white;
+        background-color: #1976D2 !important;
     }
+    
+    /* Success message */
     .stSuccess {
-        background-color: #C8E6C9;
-        color: #1B5E20;
-        border-radius: 8px;
+        background-color: #C8E6C9 !important;
+        color: #1B5E20 !important;
+        -webkit-text-fill-color: #1B5E20 !important;
+    }
+    
+    /* Info boxes */
+    .stInfo {
+        background-color: #E3F2FD !important;
+        color: #0D47A1 !important;
+        -webkit-text-fill-color: #0D47A1 !important;
+    }
+    
+    /* Metrics */
+    .stMetric {
+        background-color: #F5F5F5 !important;
         padding: 10px;
-        font-weight: bold;
+        border-radius: 8px;
     }
-    .stMarkdown p, .css-16huue1, .css-10trblm, .css-1offfwp {
+    
+    .stMetric label, .stMetric div {
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
-    .stFileUploader label {
-        color: #000000 !important;
-        font-weight: bold;
-    }
-    .stRadio label {
-        color: #000000 !important;
-        font-weight: bold;
-    }
+    
+    /* File uploader */
     .stFileUploader {
-        background-color: #F5F5F5;
+        background-color: #F5F5F5 !important;
         border-radius: 8px;
         padding: 8px;
     }
-    div[data-testid="stCheckbox"] label p {
+    
+    /* Expander */
+    .streamlit-expanderHeader {
         color: #000000 !important;
-        font-weight: bold !important;
+        -webkit-text-fill-color: #000000 !important;
+        background-color: #F5F5F5 !important;
     }
-    .stMetric {
-        background-color: #F5F5F5;
-        padding: 10px;
-        border-radius: 8px;
+    
+    /* Remove any filters that might invert colors */
+    * {
+        filter: none !important;
+        -webkit-filter: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -139,7 +182,7 @@ def read_parameter_file(uploaded_file):
         return None
 
 
-# --- Plotly Plots ---
+# --- Plotly Plots with explicit light theme ---
 def create_interactive_plots(results):
     fig = make_subplots(
         rows=1, cols=2,
@@ -172,18 +215,57 @@ def create_interactive_plots(results):
         row=1, col=2
     )
 
-    fig.update_xaxes(title_text="Wind Load [kN]", row=1, col=1, gridcolor='#E0E0E0')
-    fig.update_xaxes(title_text="Wind Velocity [m/s]", row=1, col=2, gridcolor='#E0E0E0')
-    fig.update_yaxes(title_text="Height [m]", row=1, col=1, gridcolor='#E0E0E0')
-    fig.update_yaxes(title_text="Height [m]", row=1, col=2, gridcolor='#E0E0E0')
+    # Explicit axis styling for light theme
+    fig.update_xaxes(
+        title_text="Wind Load [kN]", row=1, col=1, 
+        gridcolor='#E0E0E0',
+        linecolor='#000000',
+        title_font=dict(color='#000000'),
+        tickfont=dict(color='#000000')
+    )
+    fig.update_xaxes(
+        title_text="Wind Velocity [m/s]", row=1, col=2, 
+        gridcolor='#E0E0E0',
+        linecolor='#000000',
+        title_font=dict(color='#000000'),
+        tickfont=dict(color='#000000')
+    )
+    fig.update_yaxes(
+        title_text="Height [m]", row=1, col=1, 
+        gridcolor='#E0E0E0',
+        linecolor='#000000',
+        title_font=dict(color='#000000'),
+        tickfont=dict(color='#000000')
+    )
+    fig.update_yaxes(
+        title_text="Height [m]", row=1, col=2, 
+        gridcolor='#E0E0E0',
+        linecolor='#000000',
+        title_font=dict(color='#000000'),
+        tickfont=dict(color='#000000')
+    )
     
+    # Force light theme layout
     fig.update_layout(
-        height=600, plot_bgcolor='white', paper_bgcolor='white',
+        height=600, 
+        plot_bgcolor='white', 
+        paper_bgcolor='white',
         font=dict(color='black', size=12),
         showlegend=True,
-        legend=dict(bgcolor='rgba(255,255,255,0.8)', bordercolor='#BDBDBD', borderwidth=1),
-        hovermode='closest'
+        legend=dict(
+            bgcolor='rgba(255,255,255,0.95)', 
+            bordercolor='#BDBDBD', 
+            borderwidth=1,
+            font=dict(color='#000000')
+        ),
+        hovermode='closest',
+        title_font=dict(color='#000000')
     )
+    
+    # Update subplot titles color
+    for annotation in fig['layout']['annotations']:
+        annotation['font'] = dict(color='#000000', size=14)
+    
     return fig
 
 
