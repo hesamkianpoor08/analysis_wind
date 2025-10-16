@@ -4,6 +4,43 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
+import streamlit.components.v1 as components
+
+# --- Force Light Mode (fix Chrome dark inversion) ---
+st.markdown("""
+<style>
+  html, body, .stApp {
+    color-scheme: light !important;
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  .stApp * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    filter: none !important;
+  }
+
+  .stPlotlyChart svg, .stPlotlyChart .js-plotly-plot {
+    color: #000000 !important;
+  }
+
+  input, textarea, select, button {
+    color: #000000 !important;
+  }
+</style>
+""", unsafe_allow_html=True)
+
+components.html("""
+<script>
+  try {
+    document.documentElement.style.colorScheme = 'light';
+    document.documentElement.style.backgroundColor = '#ffffff';
+    document.documentElement.style.filter = 'none';
+  } catch(e) { console.log(e) }
+</script>
+""", height=0)
+
 
 # --- CSS Styling (Light Theme) ---
 st.markdown("""
@@ -88,13 +125,8 @@ def calculate_wind_load(H, omega, g, rho_air, Ax=303.3, Ay=592.5, z0=0.01, c_dir
     return {'z': z, 'vm': vm, 'vm_max': vm_max, 'Fwy': Fwy, 'Fwx': Fwx, 'q_p': q_p, 'Iv': Iv}
 
 
-# --- File Reader (H, g, rho_air, omega) ---
+# --- File Reader ---
 def read_parameter_file(uploaded_file):
-    """
-    Reads a file with 4 comma-separated values:
-    H, g, rho_air, omega_rpm
-    Example: 66.7,9.81,1.225,2
-    """
     try:
         data = np.loadtxt(uploaded_file, delimiter=",")
         if len(data) != 4:
@@ -107,73 +139,51 @@ def read_parameter_file(uploaded_file):
         return None
 
 
-# --- Interactive Plotly Charts ---
+# --- Plotly Plots ---
 def create_interactive_plots(results):
-    # Create subplots
     fig = make_subplots(
         rows=1, cols=2,
         subplot_titles=('Wind Load Distribution', 'Wind Velocity Profile'),
         horizontal_spacing=0.12
     )
     
-    # Plot 1: Wind Loads
     fig.add_trace(
         go.Scatter(
-            x=results['Fwy'], 
-            y=results['z'], 
-            mode='lines',
-            name='Y-direction',
+            x=results['Fwy'], y=results['z'], mode='lines', name='Y-direction',
             line=dict(color='#00BCD4', width=3),
             hovertemplate='Load: %{x:.2f} kN<br>Height: %{y} m<extra></extra>'
         ),
         row=1, col=1
     )
-    
     fig.add_trace(
         go.Scatter(
-            x=results['Fwx'], 
-            y=results['z'], 
-            mode='lines',
-            name='X-direction',
+            x=results['Fwx'], y=results['z'], mode='lines', name='X-direction',
             line=dict(color='#FF9800', width=3),
             hovertemplate='Load: %{x:.2f} kN<br>Height: %{y} m<extra></extra>'
         ),
         row=1, col=1
     )
-    
-    # Plot 2: Wind Velocity
     fig.add_trace(
         go.Scatter(
-            x=results['vm'], 
-            y=results['z'], 
-            mode='lines',
-            name='Mean Wind Velocity',
+            x=results['vm'], y=results['z'], mode='lines', name='Mean Wind Velocity',
             line=dict(color='#4CAF50', width=3),
             hovertemplate='Velocity: %{x:.2f} m/s<br>Height: %{y} m<extra></extra>'
         ),
         row=1, col=2
     )
-    
-    # Update layout
+
     fig.update_xaxes(title_text="Wind Load [kN]", row=1, col=1, gridcolor='#E0E0E0')
     fig.update_xaxes(title_text="Wind Velocity [m/s]", row=1, col=2, gridcolor='#E0E0E0')
     fig.update_yaxes(title_text="Height [m]", row=1, col=1, gridcolor='#E0E0E0')
     fig.update_yaxes(title_text="Height [m]", row=1, col=2, gridcolor='#E0E0E0')
     
     fig.update_layout(
-        height=600,
-        plot_bgcolor='white',
-        paper_bgcolor='white',
+        height=600, plot_bgcolor='white', paper_bgcolor='white',
         font=dict(color='black', size=12),
         showlegend=True,
-        legend=dict(
-            bgcolor='rgba(255,255,255,0.8)',
-            bordercolor='#BDBDBD',
-            borderwidth=1
-        ),
+        legend=dict(bgcolor='rgba(255,255,255,0.8)', bordercolor='#BDBDBD', borderwidth=1),
         hovermode='closest'
     )
-    
     return fig
 
 
@@ -182,7 +192,6 @@ st.title("Wind Load Calculator (BS EN 1991.1.4) 🌬️")
 
 mode = st.radio("Select Input Mode", ["Manual Input", "Upload Parameters File"])
 
-# --- Manual Input ---
 if mode == "Manual Input":
     st.subheader("📊 Manual Parameter Input")
 
@@ -200,42 +209,34 @@ if mode == "Manual Input":
         with st.spinner("Calculating..."):
             results = calculate_wind_load(int(H), omega, g, rho_air)
             st.success("✅ Calculation Complete!")
-
             col1, col2, col3 = st.columns(3)
             col1.metric("Max Velocity", f"{results['vm_max']:.2f} m/s")
             col2.metric("Max Load (X)", f"{results['Fwx'][-1]:.2f} kN")
             col3.metric("Max Load (Y)", f"{results['Fwy'][-1]:.2f} kN")
-
-            # Interactive Plotly Charts
             fig = create_interactive_plots(results)
             st.plotly_chart(fig, use_container_width=True)
 
-# --- Upload Parameters File ---
 else:
     st.subheader("📁 Upload Parameter File")
     st.write("File format: `H, g, rho_air, omega_rpm` (comma-separated, one line)")
-
     uploaded_file = st.file_uploader("Upload your .csv or .txt file", type=["csv", "txt"])
     if uploaded_file:
         params = read_parameter_file(uploaded_file)
         if params:
             H, g, rho_air, omega_rpm = params
             omega = omega_rpm * 2 * np.pi / 60
-
             st.info(f"✅ Loaded parameters: H={H} m, g={g}, ρ={rho_air}, ω={omega_rpm} RPM")
             if st.button("Calculate Wind Load"):
                 with st.spinner("Calculating..."):
                     results = calculate_wind_load(int(H), omega, g, rho_air)
                     st.success("✅ Calculation Complete!")
-
                     col1, col2, col3 = st.columns(3)
                     col1.metric("Max Velocity", f"{results['vm_max']:.2f} m/s")
                     col2.metric("Max Load (X)", f"{results['Fwx'][-1]:.2f} kN")
                     col3.metric("Max Load (Y)", f"{results['Fwy'][-1]:.2f} kN")
-
-                    # Interactive Plotly Charts
                     fig = create_interactive_plots(results)
                     st.plotly_chart(fig, use_container_width=True)
+
 
 with st.expander("ℹ️ About Input Parameters"):
     st.write("""
