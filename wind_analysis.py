@@ -41,12 +41,21 @@ st.markdown("""
         -webkit-text-fill-color: #000000 !important;
     }
     
-    /* Number input styling */
+    /* Number input styling - Light gray background with black text */
     input[type="number"] {
-        background-color: #2D3748 !important;
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
-        border: 1px solid #4A5568 !important;
+        background-color: #F5F5F5 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        border: 1px solid #CCCCCC !important;
+        border-radius: 4px !important;
+        padding: 8px !important;
+    }
+    
+    /* Number input when focused */
+    input[type="number"]:focus {
+        background-color: #FFFFFF !important;
+        border: 2px solid #2196F3 !important;
+        outline: none !important;
     }
     
     /* Radio buttons and labels */
@@ -259,7 +268,15 @@ def create_interactive_plots(results):
             font=dict(color='#000000')
         ),
         hovermode='closest',
-        title_font=dict(color='#000000')
+        title_font=dict(color='#000000'),
+        # Fix hover tooltip colors
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=14,
+            font_family="sans-serif",
+            font_color="black",
+            bordercolor="#2196F3"
+        )
     )
     
     # Update subplot titles color
