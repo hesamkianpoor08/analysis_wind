@@ -156,23 +156,6 @@ st.markdown("""
         filter: none !important;
         -webkit-filter: none !important;
     }
-    
-    /* NEW: Override code block and inline code backgrounds for light mode */
-    code, pre code {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        border: 1px solid #CCCCCC !important;
-        padding: 2px 4px !important;
-        border-radius: 4px !important;
-    }
-    
-    /* For larger code blocks */
-    pre {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CCCCCC !important;
-        padding: 10px !important;
-        border-radius: 4px !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -334,7 +317,7 @@ if mode == "Manual Input":
 
 else:
     st.subheader("📁 Upload Parameter File")
-    st.write("File format: `H, g, rho_air, omega_rpm` (comma-separated, one line)")
+    st.write("File format: H, g, rho_air, omega_rpm (comma-separated, one line)")
     uploaded_file = st.file_uploader("Upload your .csv or .txt file", type=["csv", "txt"])
     if uploaded_file:
         params = read_parameter_file(uploaded_file)
